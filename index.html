@@ -198,6 +198,31 @@ td.actions { white-space: nowrap; text-align: right; }
 .progress-fill.done { background:linear-gradient(90deg,var(--accent-green),#5acc7a); }
 .valor-editor { cursor:pointer; }
 .valor-editor:hover { filter:brightness(1.2); }
+.raid-cards { display:flex; flex-wrap:wrap; gap:12px; }
+.raid-card { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:16px; width:calc(33.33% - 10px); min-width:280px; flex:1 1 280px; transition:all 0.2s; box-shadow:var(--shadow); }
+.raid-card:hover { border-color:var(--gold-muted); }
+.raid-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+.raid-card-char { font-size:15px; font-weight:700; color:var(--gold-light); }
+.raid-card-instance { font-size:13px; color:var(--text-secondary); }
+.raid-card-week { font-size:11px; color:var(--text-muted); margin-left:auto; }
+.raid-card-body { margin-bottom:10px; }
+.raid-card-foot { display:flex; justify-content:space-between; align-items:center; }
+.raid-boss-row { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:13px; }
+.raid-boss-row .boss-name { flex:1; }
+.raid-boss-row .boss-mode-tag { font-size:10px; padding:1px 6px; border-radius:3px; font-weight:600; }
+.boss-mode-heroic { background:rgba(199,74,74,0.25); color:var(--accent-red); }
+.boss-mode-normal { background:rgba(74,127,199,0.25); color:var(--accent-blue); }
+.boss-mode-select { padding:2px 8px; font-size:12px; font-weight:600; background:var(--bg-primary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); outline:none; cursor:pointer; }
+.boss-mode-select:focus { border-color:var(--gold-muted); }
+.boss-completed { color:var(--accent-green); }
+.boss-pending-label { color:var(--text-muted); }
+.boss-done { color:var(--accent-green); }
+.boss-pending { color:var(--text-muted); }
+.week-filter-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.week-filter-tab { padding:4px 12px; font-size:12px; font-weight:600; border-radius:4px; cursor:pointer; border:1px solid transparent; transition:all 0.2s; background:var(--bg-card); color:var(--text-muted); }
+.week-filter-tab:hover { border-color:var(--text-muted); color:var(--text-primary); }
+.week-filter-tab.active { background:var(--gold-muted); color:#fff; border-color:var(--gold-muted); }
+@media(max-width:768px){ .raid-card { min-width:100%; } }
 
 .login-overlay {
   position: fixed; inset: 0; z-index: 9999;
@@ -319,23 +344,12 @@ td.actions { white-space: nowrap; text-align: right; }
   <div class="toolbar">
     <div class="toolbar-left">
       <h2>副本进度追踪</h2>
-      <div class="week-picker">
-        <span style="cursor:pointer;color:var(--text-muted);font-size:16px;user-select:none" onclick="changeRaidWeek(-1)" title="上一周">&#x25C0;</span>
-        <span style="display:inline-block;min-width:130px;text-align:center;font-weight:700;color:var(--gold-light);font-size:14px" id="raidWeekLabel"></span>
-        <span style="cursor:pointer;color:var(--text-muted);font-size:16px;user-select:none" onclick="changeRaidWeek(1)" title="下一周">&#x25B6;</span>
-      </div>
     </div>
     <button class="btn btn-gold" onclick="openRaidModal()">+ 记录副本进度</button>
   </div>
+  <div class="week-filter-bar" id="weekFilterBar"></div>
   <div class="data-bar" id="raidsStats"></div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr>
-        <th>角色</th><th>副本</th><th>模式</th><th>Boss 进度</th><th>状态</th><th>本周掉落</th><th>备注</th><th style="width:80px">操作</th>
-      </tr></thead>
-      <tbody id="raidsBody"></tbody>
-    </table>
-  </div>
+  <div class="raid-cards" id="raidsBody"></div>
   <div id="raidsEmpty" class="empty-state">
     <div class="empty-icon">&#x1F3F0;</div>
     <h3>还没有副本记录</h3>
@@ -448,18 +462,10 @@ td.actions { white-space: nowrap; text-align: right; }
           <input id="raidCustomInstance" placeholder="输入旧世界/其他副本名称">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>模式</label>
-          <select id="raidMode">
-            <option value="普通">普通</option><option value="英雄">英雄</option><option value="随机">随机</option>
-          </select>
-        </div>
-        <div class="form-group">
+      <div class="form-group">
           <label>所属周</label>
           <input type="week" id="raidWeekInput">
         </div>
-      </div>
       <div class="form-group">
         <label>Boss 进度</label>
         <div id="bossChecklist" class="boss-list" style="padding: 8px 0;">
@@ -702,7 +708,6 @@ function openRaidModal(d){
   document.getElementById('raidCustomInstance').value='';
   var isCustom=inst==='__custom__'||(d&&d.customName);
   if(isCustom){document.getElementById('raidCustomGroup').style.display='block';document.getElementById('raidCustomInstance').value=d?d.customName:'';}else{document.getElementById('raidCustomGroup').style.display='none';}
-  document.getElementById('raidMode').value=d?d.mode:'普通';
   document.getElementById('raidWeekInput').value=d?d.week:curRaidWeek;
   document.getElementById('raidNotes').value=d?d.notes:'';
   document.getElementById('raidLoot').value=d?d.loot:'';
@@ -718,7 +723,13 @@ function updateAllBosses(){var bs={};document.querySelectorAll('#bossChecklist i
 function updateBossChecklist(bs){
   var inst=document.getElementById('raidInstance').value;var ct=document.getElementById('bossChecklist');var bosses=BOSSES[inst];
   if(!bosses||inst==='__custom__'){ct.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:10px 0">旧世界副本：可自行设置副本名称和掉落记录</div>';return;}
-  ct.innerHTML=bosses.map(function(b){return '<div class="boss-item"><label><input type="checkbox" data-boss="'+esc(b)+'"'+(bs[b]?'checked':'')+' onchange="updateRaidStripe()">'+esc(b)+'</label><span class="'+(bs[b]?'boss-completed':'boss-pending-label')+'">'+(bs[b]?'&#x2713; 已击杀':'待击杀')+'</span></div>';}).join('');
+  ct.innerHTML=bosses.map(function(b){
+    var checked=bs[b]?true:false;
+    var mode=bs['_mode_'+b]||'普通';
+    return '<div class="boss-item"><label><input type="checkbox" data-boss="'+esc(b)+'"'+(checked?'checked':'')+' onchange="updateRaidStripe()">'+esc(b)+'</label>'
+      + '<select class="boss-mode-select" data-boss-mode="'+esc(b)+'" onchange="updateRaidStripe()"><option value="普通"'+(mode==='普通'?'selected':'')+'>普通</option><option value="英雄"'+(mode==='英雄'?'selected':'')+'>英雄</option></select>'
+      + '<span style="font-size:12px;color:'+(checked?'var(--accent-green)':'var(--text-muted)')+'">'+(checked?'已完成':'待击杀')+'</span></div>';
+  }).join('');
   updateRaidStripe();
 }
 function updateRaidStripe(){
@@ -732,34 +743,75 @@ function checkAllBosses(c){document.querySelectorAll('#bossChecklist input[type=
 function saveRaid(){
   var id=document.getElementById('raidEditId').value;
   var cn=document.getElementById('raidChar').value;var inst=document.getElementById('raidInstance').value;
-  var mode=document.getElementById('raidMode').value;var week=document.getElementById('raidWeekInput').value;
+  var week=document.getElementById('raidWeekInput').value;
   var notes=document.getElementById('raidNotes').value.trim();
   var loot=document.getElementById('raidLoot').value.trim();
   if(!cn){alert('请选择角色');return;}if(!inst){alert('请选择副本');return;}
   var customName='',displayInst=inst;
   if(inst==='__custom__'){customName=document.getElementById('raidCustomInstance').value.trim();if(!customName){alert('请输入自定义副本名称');return;}displayInst=customName;}
   var bosses={};document.querySelectorAll('#bossChecklist input[type="checkbox"]').forEach(function(cb){bosses[cb.dataset.boss]=cb.checked;});
-  var bk=Object.keys(bosses);var killed=bk.filter(function(b){return bosses[b];}).length;var total=bk.length;
+  document.querySelectorAll('#bossChecklist select[data-boss-mode]').forEach(function(sel){bosses['_mode_'+sel.dataset.bossMode]=sel.value;});
+  var bk=Object.keys(bosses).filter(function(k){return !k.startsWith('_mode_');});var killed=bk.filter(function(b){return bosses[b];}).length;var total=bk.length;
   var status=total===0?'pending':(killed===total?'done':'partial');
-  var e={charName:cn,instance:displayInst,customName:customName,mode:mode,week:week,bosses:bosses,status:status,killed:killed,total:total,notes:notes,loot:loot};
+  var e={charName:cn,instance:displayInst,customName:customName,week:week,bosses:bosses,status:status,killed:killed,total:total,notes:notes,loot:loot};
   if(id){var i=raids.findIndex(function(r){return r.id===id;});if(i!==-1){e.id=id;raids[i]=e;}}
   else{e.id='raid_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);raids.push(e);}
   saveData();renderAll();closeModal('raidModal');
 }
 function deleteRaid(id){if(!confirm('确定删除该副本记录？'))return;raids=raids.filter(function(r){return r.id!==id;});saveData();renderAll();}
+function renderWeekFilters(){
+  var weeks=[];
+  raids.forEach(function(r){if(r.week&&weeks.indexOf(r.week)===-1)weeks.push(r.week);});
+  weeks.sort();
+  var bar=document.getElementById('weekFilterBar');
+  var cur=curRaidWeek;
+  if(!bar)return;
+  bar.innerHTML='<span class="week-filter-tab'+(cur===''?' active':'')+'" onclick="curRaidWeek=\'\';renderRaids();">\u5168\u90e8 ('+raids.length+')</span>';
+  weeks.forEach(function(w){
+    var cnt=raids.filter(function(r){return r.week===w;}).length;
+    bar.innerHTML+='<span class="week-filter-tab'+(cur===w?' active':'')+'" onclick="curRaidWeek=\''+w+'\';renderRaids();">'+w+' ('+cnt+')</span>';
+  });
+}
 function renderRaids(){
   var week=curRaidWeek;
   var filtered=week?raids.filter(function(r){return r.week===week;}):raids;
   var tb=document.getElementById('raidsBody');var em=document.getElementById('raidsEmpty');
   var bg=document.getElementById('raidsBadge');bg.textContent=filtered.length;
-  if(filtered.length===0){tb.innerHTML='';em.style.display='block';document.querySelector('#tab-raids .table-wrap').style.display='none';document.getElementById('raidsStats').innerHTML='';}else{em.style.display='none';document.querySelector('#tab-raids .table-wrap').style.display='block';var dr=filtered.filter(function(r){return r.status==='done';}).length;var pr=filtered.filter(function(r){return r.status==='partial';}).length;document.getElementById('raidsStats').innerHTML='<div class="stat-card"><div class="stat-value">'+filtered.length+'</div><div class="stat-label">&#x672C;&#x5468;&#x8BB0;&#x5F55;</div></div><div class="stat-card"><div class="stat-value">'+dr+'</div><div class="stat-label">&#x5DF2;&#x5168;&#x901A;</div></div><div class="stat-card"><div class="stat-value">'+pr+'</div><div class="stat-label">&#x8FDB;&#x884C;&#x4E2D;</div></div>';}
+  renderWeekFilters();
+  if(filtered.length===0){tb.innerHTML='';em.style.display='block';document.getElementById('raidsStats').innerHTML='';}else{em.style.display='none';var dr=filtered.filter(function(r){return r.status==='done';}).length;var pr=filtered.filter(function(r){return r.status==='partial';}).length;document.getElementById('raidsStats').innerHTML='<div class="stat-card"><div class="stat-value">'+filtered.length+'</div><div class="stat-label">记录数</div></div><div class="stat-card"><div class="stat-value">'+dr+'</div><div class="stat-label">已全通</div></div><div class="stat-card"><div class="stat-value">'+pr+'</div><div class="stat-label">进行中</div></div>';}
   
   tb.innerHTML=filtered.map(function(r){
-    var sl=r.status==='done'?'已全通':(r.status==='partial'?'进行中':'未开始');
-    var sc=r.status==='done'?'raid-done':(r.status==='partial'?'raid-partial':'raid-pending');
-    var dc=r.status==='done'?'dot-done':(r.status==='partial'?'dot-partial':'dot-pending');
+    var sl=(r.status==='done'?'已全通':(r.status==='partial'?'进行中':'未开始'));
+    var sc=(r.status==='done'?'raid-done':(r.status==='partial'?'raid-partial':'raid-pending'));
+    var dc=(r.status==='done'?'dot-done':(r.status==='partial'?'dot-partial':'dot-pending'));
     var pct=r.total>0?Math.round(r.killed/r.total*100):0;
-    return '<tr><td><strong>'+esc(r.charName)+'</strong></td><td>'+esc(r.instance)+'</td><td>'+esc(r.mode)+'</td><td>'+r.killed+'/'+r.total+' ('+pct+'%)</td><td><span class="raid-status '+sc+'"><span class="status-dot '+dc+'"></span> '+sl+'</span></td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(esc(r.notes)||'-')+'</td><td class="actions"><button class="btn-icon btn-edit" onclick="openRaidModal(raids.find(function(x){return x.id===\''+r.id+'\';}))" title="编辑">&#x270F;&#xFE0F;</button><button class="btn-icon" style="color:var(--accent-red)" onclick="deleteRaid(\''+r.id+'\')" title="删除">&#x1F5D1;&#xFE0F;</button></td></tr>';
+    
+    var bossRows='';
+    if(r.bosses){
+      var bk=Object.keys(r.bosses).filter(function(k){return !k.startsWith('_mode_');});
+      bk.forEach(function(b){
+        var killed=r.bosses[b];
+        var mode=r.bosses['_mode_'+b]||'普通';
+        var modeCls=mode==='英雄'?'boss-mode-heroic':'boss-mode-normal';
+        var doneCls=killed?'boss-done':'boss-pending';
+        var icon=killed?'\u2713 ':'\u2717 ';
+        bossRows+='<div class="raid-boss-row"><span class="boss-name '+doneCls+'">'+icon+esc(b)+'</span><span class="boss-mode-tag '+modeCls+'">'+esc(mode)+'</span></div>';
+      });
+    }
+    
+    return '<div class="raid-card">'
+      +'<div class="raid-card-header">'
+      +'<div><div class="raid-card-char">\ud83e\uddd1;&#x200D;\ud83d\udde1;&#xFE0F; '+esc(r.charName)+'</div><div class="raid-card-instance">\ud83c\udff0; '+esc(r.instance)+'</div></div>'
+      +'<div style="text-align:right"><div class="raid-card-week">'+esc(r.week)+'</div><span class="raid-status '+sc+'" style="margin-top:4px;display:inline-flex"><span class="status-dot '+dc+'"></span> '+sl+'</span></div>'
+      +'</div>'
+      +'<div class="raid-card-body">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Boss\u8fdb\u5ea6</span><span style="font-size:12px;font-weight:700;color:var(--gold-light)">'+r.killed+'/'+r.total+' ('+pct+'%)</span></div>'
+      +'<div class="progress-track" style="margin-bottom:8px"><div class="progress-fill'+(r.status==='done'?' done':'')+'" style="width:'+pct+'%"></div></div>'
+      +bossRows+'</div>'
+      +'<div class="raid-card-foot">'
+      +'<div style="font-size:12px;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(esc(r.notes)||'')+'</div>'
+      +'<div class="actions"><button class="btn-icon btn-edit" onclick="openRaidModal(raids.find(function(x){return x.id===\''+r.id+'\';}))" title="edit">\ud83d\uded0;&#xFE0F;</button><button class="btn-icon" style="color:var(--accent-red)" onclick="deleteRaid(\''+r.id+'\')" title="edit">\ud83d\uddd1;&#xFE0F;</button></div>'
+      +'</div></div>';
   }).join('');
 }
 function renderValor(){
