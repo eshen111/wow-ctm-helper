@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔兽世界 CTM 私服助手</title>
+<style>
+:root {
+  --bg-primary: #0e0e12;
+  --bg-secondary: #16161d;
+  --bg-card: #1c1c26;
+  --bg-hover: #262636;
+  --border: #2a2a3e;
+  --gold: #c8a13f;
+  --gold-light: #e8c870;
+  --gold-muted: #8a7030;
+  --text-primary: #e4e4ed;
+  --text-secondary: #9a9ab0;
+  --text-muted: #6a6a80;
+  --accent-blue: #4a7fc7;
+  --accent-green: #3a9a5a;
+  --accent-red: #c74a4a;
+  --accent-orange: #c8903a;
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+.header {
+  background: linear-gradient(135deg, #0e0e18 0%, #1a1a28 100%);
+  border-bottom: 2px solid var(--gold-muted);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-icon { font-size: 28px; filter: drop-shadow(0 0 6px rgba(200,161,63,0.4)); }
+.header h1 {
+  font-size: 20px; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-sub { font-size: 11px; color: var(--text-muted); -webkit-text-fill-color: var(--text-muted); margin-top: -2px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs {
+  display: flex; gap: 0; background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--text-muted);
+  background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 8px;
+}
+.tab-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-btn .badge {
+  font-size: 11px; background: var(--gold-muted); color: #fff;
+  border-radius: 10px; padding: 1px 7px; font-weight: 600;
+}
+.main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+}
+.toolbar-left { display: flex; align-items: center; gap: 10px; }
+.toolbar h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+  font-size: 13px; font-weight: 600; border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  background: var(--bg-card); color: var(--text-primary);
+}
+.btn:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold-muted), var(--gold));
+  color: #fff; border-color: var(--gold); font-weight: 700;
+}
+.btn-gold:hover { filter: brightness(1.15); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-icon { padding: 6px; border: none; background: none; color: var(--text-muted); cursor: pointer; border-radius: 4px; font-size: 16px; transition: all 0.2s; }
+.btn-icon:hover { color: var(--text-primary); background: var(--bg-hover); }
+.btn-danger { color: var(--accent-red); border-color: var(--accent-red); }
+.btn-danger:hover { background: rgba(199,74,74,0.15); }
+.btn-edit { color: var(--accent-blue); }
+.btn-edit:hover { background: rgba(74,127,199,0.15); }
+.table-wrap { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); overflow-x: auto; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg-secondary); }
+th { padding: 10px 14px; text-align: left; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: middle; }
+tr:hover td { background: var(--bg-hover); }
+tr:last-child td { border-bottom: none; }
+td.actions { white-space: nowrap; text-align: right; }
+.pwd-wrap { display: flex; align-items: center; gap: 6px; }
+.pwd-wrap .pwd-value { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; }
+.pwd-hidden { filter: blur(6px); user-select: none; cursor: pointer; }
+.pwd-hidden:hover { filter: blur(4px); }
+.class-tag { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; text-align: center; min-width: 44px; }
+.tag-warrior { background: #c79c6e; color: #000; }
+.tag-paladin { background: #f58cba; color: #000; }
+.tag-hunter { background: #abd473; color: #000; }
+.tag-rogue { background: #fff569; color: #000; }
+.tag-priest { background: #fff; color: #000; }
+.tag-dk { background: #c41f3b; color: #fff; }
+.tag-shaman { background: #0070de; color: #fff; }
+.tag-mage { background: #69ccf0; color: #000; }
+.tag-warlock { background: #9482c9; color: #fff; }
+.tag-monk { background: #00ff96; color: #000; }
+.tag-druid { background: #ff7d0a; color: #000; }
+.tag-default { background: var(--text-muted); color: #fff; }
+.raid-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.raid-done { background: rgba(58,154,90,0.2); color: var(--accent-green); }
+.raid-partial { background: rgba(200,144,58,0.2); color: var(--accent-orange); }
+.raid-pending { background: rgba(199,74,74,0.2); color: var(--accent-red); }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot-done { background: var(--accent-green); }
+.dot-partial { background: var(--accent-orange); }
+.dot-pending { background: var(--accent-red); }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-size: 16px; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; font-size: 14px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); outline: none; transition: border-color 0.2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold-muted); }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-muted); }
+.form-group select option { background: var(--bg-secondary); }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; }
+.boss-list { list-style: none; }
+.boss-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.boss-item:last-child { border-bottom: none; }
+.boss-item label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; flex: 1; }
+.boss-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
+.filter-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; }
+.filter-tab { padding:4px 12px; font-size:12px; font-weight:600; border-radius:4px; cursor:pointer; border:1px solid transparent; transition:all 0.2s; background:var(--bg-card); color:var(--text-muted); }
+.filter-tab:hover { border-color:var(--text-muted); color:var(--text-primary); }
+.filter-tab.active { border-color:currentColor; color:#fff; }
+.filter-tab.cat-all { border-color:var(--gold-muted); color:var(--gold-light); }
+.filter-tab.cat-all.active { background:var(--gold-muted); }
+.filter-tab.cat-lianji { color:#5acc7a; }
+.filter-tab.cat-lianji.active { background:#5acc7a; color:#000; }
+.filter-tab.cat-fuben { color:#e87070; }
+.filter-tab.cat-fuben.active { background:#e87070; color:#000; }
+.filter-tab.cat-zhiye { color:#6aa0e0; }
+.filter-tab.cat-zhiye.active { background:#6aa0e0; color:#000; }
+.filter-tab.cat-zhuanye { color:#e8a050; }
+.filter-tab.cat-zhuanye.active { background:#e8a050; color:#000; }
+.filter-tab.cat-pvp { color:#b080d0; }
+.filter-tab.cat-pvp.active { background:#b080d0; color:#000; }
+.filter-tab.cat-renwu { color:#e0d050; }
+.filter-tab.cat-renwu.active { background:#e0d050; color:#000; }
+.filter-tab.cat-macro { color:#50c0b0; }
+.filter-tab.cat-macro.active { background:#50c0b0; color:#000; }
+.filter-tab.cat-other { color:var(--text-muted); }
+.filter-tab.cat-other.active { background:var(--text-muted); color:#fff; }
+.guide-link { color:var(--gold-light); text-decoration:none; }
+.guide-link:hover { text-decoration:underline; }
+.data-bar { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; min-width: 120px; }
+.stat-card .stat-value { font-size: 24px; font-weight: 800; color: var(--gold-light); }
+.stat-card .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.week-picker { display: flex; align-items: center; gap: 8px; }
+.week-picker input[type="week"] { padding: 6px 10px; font-size: 13px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); outline: none; }
+.week-picker input[type="week"]:focus { border-color: var(--gold-muted); }
+@media (max-width: 768px) {
+  .header { padding: 12px 16px; } .header h1 { font-size: 17px; }
+  .tabs { padding: 0 8px; } .tab-btn { padding: 10px 12px; font-size: 13px; }
+  .main { padding: 14px 12px; } .form-row { grid-template-columns: 1fr; }
+  .data-bar { gap: 10px; }
+  .stat-card { min-width: 80px; padding: 10px 14px; } .stat-card .stat-value { font-size: 20px; }
+  th, td { padding: 8px 10px; }
+}
+
+.progress-bar { display:flex; align-items:center; gap:8px; width:100%; }
+.progress-track { flex:1; height:8px; background:var(--bg-primary); border-radius:4px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--gold-muted),var(--gold)); transition:width 0.3s; }
+.progress-fill.done { background:linear-gradient(90deg,var(--accent-green),#5acc7a); }
+.valor-editor { cursor:pointer; }
+.valor-editor:hover { filter:brightness(1.2); }
+
+.login-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, #0a0a12 0%, #12121e 50%, #0a0a12 100%);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.5s;
+}
+.login-overlay.hidden { opacity: 0; pointer-events: none; }
+.login-box {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 12px; padding: 40px 36px; width: 100%; max-width: 380px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6); text-align: center;
+}
+.login-icon { font-size: 48px; margin-bottom: 12px; }
+.login-box h2 {
+  font-size: 18px; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.login-box input {
+  width: 100%; padding: 10px 14px; font-size: 16px;
+  background: var(--bg-primary); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-primary); outline: none;
+  text-align: center; letter-spacing: 4px; transition: border-color 0.2s;
+}
+.login-box input:focus { border-color: var(--gold); }
+.login-box input::placeholder { letter-spacing: 0; font-size: 13px; }
+.login-box .login-error { font-size: 12px; color: var(--accent-red); margin-top: 8px; min-height: 20px; }
+.login-box .btn-gold { width: 100%; margin-top: 14px; justify-content: center; padding: 10px; font-size: 14px; }
+.login-box .login-hint { font-size: 11px; color: var(--text-muted); margin-top: 16px; opacity: 0.5; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-icon">&#x1F512;</div>
+    <h2>CTM 私服助手</h2>
+    <p>请输入密码以继续</p>
+    <input type="password" id="loginPwd" placeholder="输入密码" onkeydown="if(event.key==='Enter')login()">
+    <div class="login-error" id="loginError"></div>
+    <button class="btn btn-gold" onclick="login()">解锁</button>
+    <div class="login-hint">密码错误将无法访问</div>
+  </div>
+</div>
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">&#x2694;&#xFE0F;</div>
+    <div>
+      <h1>CTM 私服助手</h1>
+      <div class="header-sub">World of Warcraft &middot; 大地的裂变</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm" onclick="exportData()">&#x1F4E6; 导出数据</button>
+    <button class="btn btn-sm" onclick="document.getElementById('importInput').click()">&#x1F4C2; 导入数据</button>
+    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('accounts')" data-tab="accounts">&#x1F9D1;&#x200D;&#x1F4BB; 账号信息 <span class="badge" id="accountsBadge">0</span></button>
+  <button class="tab-btn" onclick="switchTab('guides')" data-tab="guides">&#x1F4DA; 攻略收藏 <span class="badge" id="guidesBadge">0</span></button>
+  <button class="tab-btn" onclick="switchTab('raids')" data-tab="raids">&#x1F3F0; 副本进度 <span class="badge" id="raidsBadge">0</span></button>
+</div>
+<div class="main">
+<div class="tab-content active" id="tab-accounts">
+  <div class="toolbar">
+    <div class="toolbar-left"><h2>角色与账号</h2></div>
+    <button class="btn btn-gold" onclick="openAccountModal()">+ 添加角色</button>
+  </div>
+  <div class="data-bar" id="accountsStats"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>服务器</th><th>账号</th><th>密码</th><th>角色名</th><th>职业</th><th>等级</th><th>装备等级</th><th>备注</th><th style="width:80px">操作</th>
+      </tr></thead>
+      <tbody id="accountsBody"></tbody>
+    </table>
+  </div>
+  <div id="accountsEmpty" class="empty-state">
+    <div class="empty-icon">&#x1F5E1;&#xFE0F;</div>
+    <h3>还没有角色信息</h3>
+    <p>点击上方"添加角色"开始记录你的账号和角色信息</p>
+  </div>
+</div>
+<div class="tab-content" id="tab-guides">
+  <div class="toolbar">
+    <div class="toolbar-left"><h2>攻略收藏</h2></div>
+    <button class="btn btn-gold" onclick="openGuideModal()">+ 添加攻略</button>
+  </div>
+  <div class="filter-tabs" id="guideFilterTabs">
+    <span class="filter-tab cat-all active" data-cat="" onclick="filterGuides('')">全部</span>
+    <span class="filter-tab cat-lianji" data-cat="练级" onclick="filterGuides('练级')">练级</span>
+    <span class="filter-tab cat-fuben" data-cat="副本攻略" onclick="filterGuides('副本攻略')">副本攻略</span>
+    <span class="filter-tab cat-zhiye" data-cat="职业指南" onclick="filterGuides('职业指南')">职业指南</span>
+    <span class="filter-tab cat-zhuanye" data-cat="专业" onclick="filterGuides('专业')">专业</span>
+    <span class="filter-tab cat-pvp" data-cat="PVP" onclick="filterGuides('PVP')">PVP</span>
+    <span class="filter-tab cat-renwu" data-cat="任务" onclick="filterGuides('任务')">任务</span>
+    <span class="filter-tab cat-macro" data-cat="宏与插件" onclick="filterGuides('宏与插件')">宏与插件</span>
+    <span class="filter-tab cat-other" data-cat="其他" onclick="filterGuides('其他')">其他</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:40%">标题</th><th>分类</th><th>职业</th><th>来源</th><th>备注</th><th style="width:80px">操作</th>
+      </tr></thead>
+      <tbody id="guideBody"></tbody>
+    </table>
+  </div>
+  <div id="guidesEmpty" class="empty-state">
+    <div class="empty-icon">&#x1F4DC;</div>
+    <h3>还没有收藏攻略</h3>
+    <p>点击上方"添加攻略"收藏你找到的攻略文章</p>
+  </div>
+</div>
+<div class="tab-content" id="tab-raids">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <h2>副本进度追踪</h2>
+      <div class="week-picker">
+        <span style="cursor:pointer;color:var(--text-muted);font-size:16px;user-select:none" onclick="changeRaidWeek(-1)" title="上一周">&#x25C0;</span>
+        <span style="display:inline-block;min-width:130px;text-align:center;font-weight:700;color:var(--gold-light);font-size:14px" id="raidWeekLabel"></span>
+        <span style="cursor:pointer;color:var(--text-muted);font-size:16px;user-select:none" onclick="changeRaidWeek(1)" title="下一周">&#x25B6;</span>
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="openRaidModal()">+ 记录副本进度</button>
+  </div>
+  <div class="data-bar" id="raidsStats"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>角色</th><th>副本</th><th>模式</th><th>Boss 进度</th><th>状态</th><th>本周掉落</th><th>备注</th><th style="width:80px">操作</th>
+      </tr></thead>
+      <tbody id="raidsBody"></tbody>
+    </table>
+  </div>
+  <div id="raidsEmpty" class="empty-state">
+    <div class="empty-icon">&#x1F3F0;</div>
+    <h3>还没有副本记录</h3>
+    <p>点击上方"记录副本进度"开始追踪你的副本完成情况</p>
+  </div>
+</div>
+</div>
+<div class="modal-overlay" id="accountModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="accountModalTitle">添加角色</h3>
+      <button class="btn-icon" onclick="closeModal('accountModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>服务器</label><input id="accServer" placeholder="例如：艾泽拉斯"></div>
+        <div class="form-group"><label>账号</label><input id="accUsername" placeholder="登录账号"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>密码</label><input id="accPassword" type="password" placeholder="密码"></div>
+        <div class="form-group"><label>角色名</label><input id="accCharName" placeholder="角色名称"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>职业</label>
+          <select id="accClass">
+            <option value="">选择职业</option>
+            <option value="战士">战士</option><option value="圣骑士">圣骑士</option><option value="猎人">猎人</option>
+            <option value="潜行者">潜行者</option><option value="牧师">牧师</option><option value="死亡骑士">死亡骑士</option>
+            <option value="萨满祭司">萨满祭司</option><option value="法师">法师</option><option value="术士">术士</option>
+            <option value="武僧">武僧</option><option value="德鲁伊">德鲁伊</option>
+          </select>
+        </div>
+        <div class="form-group"><label>等级</label><input id="accLevel" type="number" min="1" max="85" placeholder="85"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>装备等级</label><input id="accIlvl" type="number" step="0.1" placeholder="359"></div>
+        <div class="form-group"><label>种族</label><input id="accRace" placeholder="例如：人类"></div>
+      </div>
+      <div class="form-group"><label>备注</label><textarea id="accNotes" placeholder="专业技能、专精等补充信息"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('accountModal')">取消</button>
+      <button class="btn btn-gold" onclick="saveAccount()">保存</button>
+    </div>
+    <input type="hidden" id="accEditId" value="">
+  </div>
+</div>
+<div class="modal-overlay" id="guideModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="guideModalTitle">添加攻略</h3>
+      <button class="btn-icon" onclick="closeModal('guideModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>攻略标题</label><input id="guideTitle" placeholder="攻略名称"></div>
+      <div class="form-group"><label>链接</label><input id="guideUrl" placeholder="https://..."></div>
+      <div class="form-group">
+        <label>分类</label>
+        <select id="guideCategory">
+          <option value="">选择分类</option>
+          <option value="练级">练级</option><option value="副本攻略">副本攻略</option><option value="职业指南">职业指南</option>
+          <option value="专业">专业</option><option value="PVP">PVP</option><option value="任务">任务</option>
+          <option value="宏与插件">宏与插件</option><option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>相关职业</label>
+        <select id="guideClass">
+          <option value="">不指定职业</option>
+          <option value="战士">战士</option><option value="圣骑士">圣骑士</option><option value="猎人">猎人</option>
+          <option value="潜行者">潜行者</option><option value="牧师">牧师</option><option value="死亡骑士">死亡骑士</option>
+          <option value="萨满祭司">萨满祭司</option><option value="法师">法师</option><option value="术士">术士</option>
+          <option value="武僧">武僧</option><option value="德鲁伊">德鲁伊</option>
+        </select>
+      </div>
+      <div class="form-group"><label>备注</label><textarea id="guideNotes" placeholder="简要说明或心得"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('guideModal')">取消</button>
+      <button class="btn btn-gold" onclick="saveGuide()">保存</button>
+    </div>
+    <input type="hidden" id="guideEditId" value="">
+  </div>
+</div>
+<div class="modal-overlay" id="raidModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="raidModalTitle">记录副本进度</h3>
+      <button class="btn-icon" onclick="closeModal('raidModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>角色</label>
+          <select id="raidChar"><option value="">选择角色</option></select>
+        </div>
+        <div class="form-group">
+          <label>副本</label>
+          <select id="raidInstance" onchange="updateAllBosses()">
+            <option value="">选择副本</option>
+            <option value="暮光堡垒">暮光堡垒</option><option value="黑翼血环">黑翼血环</option>
+            <option value="四风王座">四风王座</option><option value="火焰之地">火焰之地</option>
+            <option value="巨龙之魂">巨龙之魂</option><option value="巴拉丁监狱">巴拉丁监狱</option>
+            <option value="祖尔格拉布">祖尔格拉布</option><option value="祖阿曼">祖阿曼</option><option value="__custom__">其他旧世界副本（自填）</option>
+          </select>
+        </div>
+        <div class="form-group" id="raidCustomGroup" style="display:none">
+          <label>自定义副本名称</label>
+          <input id="raidCustomInstance" placeholder="输入旧世界/其他副本名称">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>模式</label>
+          <select id="raidMode">
+            <option value="普通">普通</option><option value="英雄">英雄</option><option value="随机">随机</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>所属周</label>
+          <input type="week" id="raidWeekInput">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Boss 进度</label>
+        <div id="bossChecklist" class="boss-list" style="padding: 8px 0;">
+          <div style="color:var(--text-muted);font-size:13px;padding:10px 0">请先选择副本</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:4px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="raidAllDone" onchange="checkAllBosses(this.checked)"> 全部已击杀
+        </label>
+      </div>
+      <div class="form-group"><label>备注</label><textarea id="raidNotes" placeholder="灭团点、注意事项等"></textarea></div>
+      <div class="form-group"><label>本周掉落收获</label><textarea id="raidLoot" placeholder="记录本周掉落的装备等"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('raidModal')">取消</button>
+      <button class="btn btn-gold" onclick="saveRaid()">保存</button>
+    </div>
+    <input type="hidden" id="raidEditId" value="">
+  </div>
+</div>
+<script>
+const BOSSES = {
+  '暮光堡垒': ['哈尔弗斯·碎龙者','瓦里昂娜 & 瑟纳利昂','升腾者议会','丘加利','古加尔'],
+  '黑翼血环': ['熔喉','全能魔像防御系统','马洛拉克','阿加纳苟斯','奇玛隆','奈法利安的末日','艾卓曼德斯','赛斯特拉'],
+  '四风王座': ['风之议会','奥拉基尔'],
+  '火焰之地': ['贝丝缇拉克','雷奥利斯','阿利兹拉','沙恩诺克斯','巴勒罗克 & 贝尔洛克','管理者鹿盔','拉格纳罗斯'],
+  '巨龙之魂': ['莫卓克','督军佐诺兹','未眠者尤沙吉','缚风者哈格拉','奥卓克希昂','疯狂之口','战争大师黑角','死亡之翼的脊椎','死亡之翼的狂乱'],
+  '巴拉丁监狱': ['阿尔加洛斯','奥库萨鲁斯'],
+  '祖尔格拉布': ['高阶祭司温克里莎 / 疯鱼','血领主曼多基尔','格里雷克 / 哈扎拉尔 / 雷纳塔基','金度','塞卡尔'],
+  '祖阿曼': ['纳洛拉克','阿基尔森','贾纳雷','哈尔拉兹','达卡莱巨魔','祖尔金']
+};
+let accounts = []; let guides = []; let raids = []; let valorData = {};
+/* ===== Supabase 配置 (可选) =====
+ * 如需跨设备实时同步:
+ * 1. 在 supabase.com 注册并创建项目
+ * 2. 将下方两个变量填入你的项目值
+ */
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
+var supabaseClient = null;
+var dataRowId = localStorage.getItem('wow_data_id') || null;
+var isRemoteUpdate = false;
+if(SUPABASE_URL && SUPABASE_ANON_KEY){
+  try{supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
+}
+async function init() {
+  if(sessionStorage.getItem('wow_auth')==='1'){document.getElementById('loginOverlay').classList.add('hidden');}
+  if(supabaseClient){await loadRemoteData();setupRealtime();}else{loadLocalData();}
+  initWeekInput(); renderAll();
+}
+async function loadRemoteData(){
+  try{
+    if(dataRowId){
+      var {data:row}=await supabaseClient.from('app_data').select('*').eq('id',dataRowId).single();
+      if(row){applyData(row.data);return;}
+    }
+    var {data:newRow}=await supabaseClient.from('app_data').insert({data:{accounts:[],guides:[],raids:[],valorData:{}}}).select().single();
+    if(newRow){dataRowId=newRow.id;localStorage.setItem('wow_data_id',dataRowId);applyData(newRow.data);}
+  }catch(e){loadLocalData();console.warn('Sync failed, using local data',e);}
+}
+function setupRealtime(){
+  if(!supabaseClient||!dataRowId)return;
+  supabaseClient.channel('wow-sync').on('postgres_changes',
+    {event:'UPDATE',schema:'public',table:'app_data',filter:'id=eq.'+dataRowId},
+    function(payload){
+      isRemoteUpdate=true;
+      applyData(payload.new.data);
+      renderAll();
+      isRemoteUpdate=false;
+    }
+  ).subscribe();
+}
+function applyData(d){
+  if(!d)return;
+  accounts=d.accounts||[];guides=d.guides||[];raids=d.raids||[];valorData=d.valorData||{};
+}
+function loadLocalData() {
+  try { var r = localStorage.getItem('wow_ctm_data'); if(r){var d=JSON.parse(r);accounts=d.accounts||[];guides=d.guides||[];raids=d.raids||[];valorData=d.valorData||{};} } catch(e){}
+}
+async function saveData() {
+  if(isRemoteUpdate)return;
+  var d={accounts:accounts,guides:guides,raids:raids,valorData:valorData};
+  if(supabaseClient&&dataRowId){try{await supabaseClient.from('app_data').update({data:d,updated_at:new Date().toISOString()}).eq('id',dataRowId);}catch(e){}}
+  try{localStorage.setItem('wow_ctm_data',JSON.stringify(d));}catch(e){}
+}
+function exportData() {
+  var b=new Blob([JSON.stringify({accounts,guides,raids,valorData},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='wow_ctm_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importData(e) {
+  var f=e.target.files[0];if(!f)return;
+  var rdr=new FileReader();
+  rdr.onload=async function(ev){
+    try{var d=JSON.parse(ev.target.result);if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;await saveData();renderAll();alert('数据导入成功！');}catch(e){alert('导入失败：文件格式不正确');}
+  };
+  rdr.readAsText(r2);e.target.value='';
+}
+async function login(){
+  var pwd=document.getElementById('loginPwd').value;
+  var err=document.getElementById('loginError');
+  if(!pwd){err.textContent='请输入密码';return;}
+  var enc=new TextEncoder();var d1=enc.encode(pwd);
+  var buf=await crypto.subtle.digest('SHA-256',d1);
+  var arr=Array.from(new Uint8Array(buf));
+  var hh=arr.map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  if(hh==='ee79976c9380d5e337fc1c095ece8c8f22f91f306ceeb161fa51fecede2c4ba1'){
+    sessionStorage.setItem('wow_auth','1');
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('loginPwd').value='';
+  }else{
+    err.textContent='密码错误，请重试';
+    document.getElementById('loginPwd').value='';
+  }
+}
+var curRaidWeek = '';
+function getRaidWeek(date){
+  var d=new Date(date);var day=d.getDay();
+  d.setDate(d.getDate()-((day+3)%7));
+  var y=d.getFullYear();var s=new Date(y,0,1);
+  while(s.getDay()!==4)s.setDate(s.getDate()+1);
+  var dd=Math.round((d-s)/86400000);
+  var wn=Math.floor(dd/7)+1;
+  return y+'-R'+String(wn);
+}
+function getRaidThu(weekLabel){
+  var p=weekLabel.split('-R');var y=parseInt(p[0]);var wn=parseInt(p[1]);
+  var s=new Date(y,0,1);while(s.getDay()!==4)s.setDate(s.getDate()+1);
+  s.setDate(s.getDate()+(wn-1)*7);
+  return s;
+}
+function initWeekInput(){
+  curRaidWeek=getRaidWeek(new Date());
+  document.getElementById('raidWeekLabel').textContent=curRaidWeek;
+  document.getElementById('raidWeekInput').value=curRaidWeek;
+  renderRaids();
+}
+function changeRaidWeek(delta){
+  var thu=getRaidThu(curRaidWeek);
+  thu.setDate(thu.getDate()+delta*7);
+  curRaidWeek=getRaidWeek(thu);
+  document.getElementById('raidWeekLabel').textContent=curRaidWeek;
+  document.getElementById('raidWeekInput').value=curRaidWeek;
+  renderRaids();
+}
+
+function switchTab(n) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="'+n+'"]').classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.remove('open');});});
+function getClassTag(c){var m={'战士':'tag-warrior','圣骑士':'tag-paladin','猎人':'tag-hunter','潜行者':'tag-rogue','牧师':'tag-priest','死亡骑士':'tag-dk','萨满祭司':'tag-shaman','法师':'tag-mage','术士':'tag-warlock','武僧':'tag-monk','德鲁伊':'tag-druid'};return m[c]||'tag-default';}
+function esc(s){if(s==null)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+function togglePwd(el){el.classList.toggle('pwd-hidden');}
+function openAccountModal(d){
+  document.getElementById('accEditId').value=d?d.id:'';
+  document.getElementById('accountModalTitle').textContent=d?'编辑角色':'添加角色';
+  document.getElementById('accServer').value=d?d.server:'';
+  document.getElementById('accUsername').value=d?d.username:'';
+  document.getElementById('accPassword').value=d?d.password:'';
+  document.getElementById('accCharName').value=d?d.charName:'';
+  document.getElementById('accClass').value=d?d.class:'';
+  document.getElementById('accLevel').value=d?d.level:'';
+  document.getElementById('accIlvl').value=d?d.ilvl:'';
+  document.getElementById('accRace').value=d?d.race:'';
+  document.getElementById('accNotes').value=d?d.notes:'';
+  openModal('accountModal');
+}
+function saveAccount(){
+  var id=document.getElementById('accEditId').value;
+  var e={server:document.getElementById('accServer').value.trim(),username:document.getElementById('accUsername').value.trim(),password:document.getElementById('accPassword').value,charName:document.getElementById('accCharName').value.trim(),class:document.getElementById('accClass').value,level:document.getElementById('accLevel').value,ilvl:document.getElementById('accIlvl').value,race:document.getElementById('accRace').value.trim(),notes:document.getElementById('accNotes').value.trim()};
+  if(!e.charName){alert('请输入角色名');return;}
+  if(id){var i=accounts.findIndex(function(a){return a.id===id;});if(i!==-1){e.id=id;accounts[i]=e;}}
+  else{e.id='acc_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);accounts.push(e);}
+  saveData();renderAll();closeModal('accountModal');
+}
+function deleteAccount(id){if(!confirm('确定删除该角色信息？'))return;accounts=accounts.filter(function(a){return a.id!==id;});saveData();renderAll();}
+function renderAccounts(){
+  var tb=document.getElementById('accountsBody');var em=document.getElementById('accountsEmpty');var bg=document.getElementById('accountsBadge');bg.textContent=accounts.length;
+  if(accounts.length===0){tb.innerHTML='';em.style.display='block';document.querySelector('#tab-accounts .table-wrap').style.display='none';document.getElementById('accountsStats').innerHTML='';return;}
+  em.style.display='none';document.querySelector('#tab-accounts .table-wrap').style.display='block';
+  var ml=accounts.filter(function(a){return parseInt(a.level)>=85;}).length;
+  document.getElementById('accountsStats').innerHTML='<div class="stat-card"><div class="stat-value">'+accounts.length+'</div><div class="stat-label">总角色数</div></div><div class="stat-card"><div class="stat-value">'+ml+'</div><div class="stat-label">满级角色</div></div>';
+  tb.innerHTML=accounts.map(function(a){return '<tr><td>'+(esc(a.server)||'-')+'</td><td>'+(esc(a.username)||'-')+'</td><td><div class="pwd-wrap"><span class="pwd-value pwd-hidden" onclick="togglePwd(this)">'+(esc(a.password)||'-')+'</span><span class="btn-icon" style="font-size:12px" onclick="togglePwd(this.parentNode.querySelector(\'.pwd-value\'))" title="显示/隐藏密码">&#x1F441;&#xFE0F;</span></div></td><td><strong>'+esc(a.charName)+'</strong></td><td>'+(a.class?'<span class="class-tag '+getClassTag(a.class)+'">'+esc(a.class)+'</span>':'-')+'</td><td>'+(a.level||'-')+'</td><td>'+(a.ilvl||'-')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(esc(a.notes)||'-')+'</td><td class="actions"><button class="btn-icon btn-edit" onclick="openAccountModal(accounts.find(function(x){return x.id===\''+a.id+'\';}))" title="编辑">&#x270F;&#xFE0F;</button><button class="btn-icon" style="color:var(--accent-red)" onclick="deleteAccount(\''+a.id+'\')" title="删除">&#x1F5D1;&#xFE0F;</button></td></tr>';}).join('');
+}
+var guideFilter = '';
+function openGuideModal(d){
+  document.getElementById('guideEditId').value=d?d.id:'';
+  document.getElementById('guideModalTitle').textContent=d?'编辑攻略':'添加攻略';
+  document.getElementById('guideTitle').value=d?d.title:'';
+  document.getElementById('guideUrl').value=d?d.url:'';
+  document.getElementById('guideCategory').value=d?d.category:'';
+  document.getElementById('guideClass').value=d?d.guideClass:'';
+  document.getElementById('guideNotes').value=d?d.notes:'';
+  openModal('guideModal');
+}
+function saveGuide(){
+  var id=document.getElementById('guideEditId').value;
+  var e={title:document.getElementById('guideTitle').value.trim(),url:document.getElementById('guideUrl').value.trim(),category:document.getElementById('guideCategory').value,guideClass:document.getElementById('guideClass').value,notes:document.getElementById('guideNotes').value.trim()};
+  if(!e.title){alert('请输入攻略标题');return;}
+  if(id){var i=guides.findIndex(function(g){return g.id===id;});if(i!==-1){e.id=id;e.createdAt=guides[i].createdAt;guides[i]=e;}}
+  else{e.id='guide_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);e.createdAt=new Date().toISOString();guides.unshift(e);}
+  saveData();renderAll();closeModal('guideModal');
+}
+function deleteGuide(id){if(!confirm('确定删除该攻略？'))return;guides=guides.filter(function(g){return g.id!==id;});saveData();renderAll();}
+function filterGuides(cat){
+  guideFilter=cat;
+  document.querySelectorAll('#guideFilterTabs .filter-tab').forEach(function(t){t.classList.toggle('active',t.dataset.cat===cat);});
+  renderGuides();
+}
+function renderGuides(){
+  var tb=document.getElementById('guideBody');var em=document.getElementById('guidesEmpty');var bg=document.getElementById('guidesBadge');
+  var filtered=guideFilter?guides.filter(function(g){return g.category===guideFilter;}):guides;
+  bg.textContent=filtered.length;
+  if(filtered.length===0&&!guideFilter){tb.innerHTML='';em.style.display='block';document.querySelector('#tab-guides .table-wrap').style.display='none';return;}
+  em.style.display='none';document.querySelector('#tab-guides .table-wrap').style.display='block';
+  tb.innerHTML=filtered.map(function(g){
+    var cc='';
+    var catColors={'练级':'#5acc7a','副本攻略':'#e87070','职业指南':'#6aa0e0','专业':'#e8a050','PVP':'#b080d0','任务':'#e0d050','宏与插件':'#50c0b0','其他':'var(--text-muted)'};
+    if(g.category) cc='<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:'+(catColors[g.category]||'var(--text-muted)')+';color:#000;font-size:11px;font-weight:600">'+esc(g.category)+'</span>';
+    var cl='';
+    if(g.guideClass) cl='<span class="class-tag '+getClassTag(g.guideClass)+'">'+esc(g.guideClass)+'</span>';
+    var host='';
+    try{if(g.url) host=new URL(g.url).hostname;}catch(e){}
+    return '<tr><td><a class="guide-link" href="'+esc(g.url)+'" target="_blank" rel="noopener">'+esc(g.title)+'</a></td><td>'+cc+'</td><td>'+cl+'</td><td style="color:var(--text-muted);font-size:12px">'+host+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary)">'+(esc(g.notes)||'')+'</td><td class="actions"><button class="btn-icon btn-edit" onclick="openGuideModal(guides.find(function(x){return x.id===\''+g.id+'\';}))" title="编辑">&#x270F;&#xFE0F;</button><button class="btn-icon" style="color:var(--accent-red)" onclick="deleteGuide(\''+g.id+'\')" title="删除">&#x1F5D1;&#xFE0F;</button></td></tr>';
+  }).join('');
+}
+function openRaidModal(d){
+  document.getElementById('raidEditId').value=d?d.id:'';
+  document.getElementById('raidModalTitle').textContent=d?'编辑副本进度':'记录副本进度';
+  var cs=document.getElementById('raidChar');
+  cs.innerHTML='<option value="">选择角色</option>'+accounts.filter(function(a){return a.charName;}).map(function(a){return '<option value="'+esc(a.charName)+'"'+(d&&d.charName===a.charName?'selected':'')+'>'+esc(a.charName)+(a.class?' ('+esc(a.class)+')':'')+'</option>';}).join('');
+  var inst=d?d.instance:'';
+  document.getElementById('raidInstance').value=inst;
+  document.getElementById('raidCustomInstance').value='';
+  var isCustom=inst==='__custom__'||(d&&d.customName);
+  if(isCustom){document.getElementById('raidCustomGroup').style.display='block';document.getElementById('raidCustomInstance').value=d?d.customName:'';}else{document.getElementById('raidCustomGroup').style.display='none';}
+  document.getElementById('raidMode').value=d?d.mode:'普通';
+  document.getElementById('raidWeekInput').value=d?d.week:curRaidWeek;
+  document.getElementById('raidNotes').value=d?d.notes:'';
+  document.getElementById('raidLoot').value=d?d.loot:'';
+  updateBossChecklist(d?((!isCustom&&d.bosses)?d.bosses:{}):{});
+  document.getElementById('raidAllDone').checked=false;
+  openModal('raidModal');
+}
+function updateAllBosses(){var bs={};document.querySelectorAll('#bossChecklist input[type="checkbox"]').forEach(function(cb){bs[cb.dataset.boss]=cb.checked;});
+  var inst=document.getElementById('raidInstance').value;
+  if(inst==='__custom__'){document.getElementById('raidCustomGroup').style.display='block';}else{document.getElementById('raidCustomGroup').style.display='none';}
+  updateBossChecklist(bs);
+}
+function updateBossChecklist(bs){
+  var inst=document.getElementById('raidInstance').value;var ct=document.getElementById('bossChecklist');var bosses=BOSSES[inst];
+  if(!bosses||inst==='__custom__'){ct.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:10px 0">旧世界副本：可自行设置副本名称和掉落记录</div>';return;}
+  ct.innerHTML=bosses.map(function(b){return '<div class="boss-item"><label><input type="checkbox" data-boss="'+esc(b)+'"'+(bs[b]?'checked':'')+' onchange="updateRaidStripe()">'+esc(b)+'</label><span class="'+(bs[b]?'boss-completed':'boss-pending-label')+'">'+(bs[b]?'&#x2713; 已击杀':'待击杀')+'</span></div>';}).join('');
+  updateRaidStripe();
+}
+function updateRaidStripe(){
+  var cbs=document.querySelectorAll('#bossChecklist input[type="checkbox"]');
+  var t=cbs.length;var d=Array.from(cbs).filter(function(cb){return cb.checked;}).length;
+  var el=document.getElementById('raidStatusDisplay')||function(){var e=document.createElement('div');e.id='raidStatusDisplay';document.getElementById('bossChecklist').after(e);return e;}();
+  if(t===0){el.textContent='';return;}
+  el.innerHTML='<div style="margin-top:8px;font-size:13px;color:var(--text-secondary)">进度：'+d+'/'+t+' ('+Math.round(d/t*100)+'%)</div>';
+}
+function checkAllBosses(c){document.querySelectorAll('#bossChecklist input[type="checkbox"]').forEach(function(cb){cb.checked=c;});updateRaidStripe();}
+function saveRaid(){
+  var id=document.getElementById('raidEditId').value;
+  var cn=document.getElementById('raidChar').value;var inst=document.getElementById('raidInstance').value;
+  var mode=document.getElementById('raidMode').value;var week=document.getElementById('raidWeekInput').value;
+  var notes=document.getElementById('raidNotes').value.trim();
+  var loot=document.getElementById('raidLoot').value.trim();
+  if(!cn){alert('请选择角色');return;}if(!inst){alert('请选择副本');return;}
+  var customName='',displayInst=inst;
+  if(inst==='__custom__'){customName=document.getElementById('raidCustomInstance').value.trim();if(!customName){alert('请输入自定义副本名称');return;}displayInst=customName;}
+  var bosses={};document.querySelectorAll('#bossChecklist input[type="checkbox"]').forEach(function(cb){bosses[cb.dataset.boss]=cb.checked;});
+  var bk=Object.keys(bosses);var killed=bk.filter(function(b){return bosses[b];}).length;var total=bk.length;
+  var status=total===0?'pending':(killed===total?'done':'partial');
+  var e={charName:cn,instance:displayInst,customName:customName,mode:mode,week:week,bosses:bosses,status:status,killed:killed,total:total,notes:notes,loot:loot};
+  if(id){var i=raids.findIndex(function(r){return r.id===id;});if(i!==-1){e.id=id;raids[i]=e;}}
+  else{e.id='raid_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);raids.push(e);}
+  saveData();renderAll();closeModal('raidModal');
+}
+function deleteRaid(id){if(!confirm('确定删除该副本记录？'))return;raids=raids.filter(function(r){return r.id!==id;});saveData();renderAll();}
+function renderRaids(){
+  var week=curRaidWeek;
+  var filtered=week?raids.filter(function(r){return r.week===week;}):raids;
+  var tb=document.getElementById('raidsBody');var em=document.getElementById('raidsEmpty');
+  var bg=document.getElementById('raidsBadge');bg.textContent=filtered.length;
+  if(filtered.length===0){tb.innerHTML='';em.style.display='block';document.querySelector('#tab-raids .table-wrap').style.display='none';document.getElementById('raidsStats').innerHTML='';}else{em.style.display='none';document.querySelector('#tab-raids .table-wrap').style.display='block';var dr=filtered.filter(function(r){return r.status==='done';}).length;var pr=filtered.filter(function(r){return r.status==='partial';}).length;document.getElementById('raidsStats').innerHTML='<div class="stat-card"><div class="stat-value">'+filtered.length+'</div><div class="stat-label">&#x672C;&#x5468;&#x8BB0;&#x5F55;</div></div><div class="stat-card"><div class="stat-value">'+dr+'</div><div class="stat-label">&#x5DF2;&#x5168;&#x901A;</div></div><div class="stat-card"><div class="stat-value">'+pr+'</div><div class="stat-label">&#x8FDB;&#x884C;&#x4E2D;</div></div>';}
+  
+  tb.innerHTML=filtered.map(function(r){
+    var sl=r.status==='done'?'已全通':(r.status==='partial'?'进行中':'未开始');
+    var sc=r.status==='done'?'raid-done':(r.status==='partial'?'raid-partial':'raid-pending');
+    var dc=r.status==='done'?'dot-done':(r.status==='partial'?'dot-partial':'dot-pending');
+    var pct=r.total>0?Math.round(r.killed/r.total*100):0;
+    return '<tr><td><strong>'+esc(r.charName)+'</strong></td><td>'+esc(r.instance)+'</td><td>'+esc(r.mode)+'</td><td>'+r.killed+'/'+r.total+' ('+pct+'%)</td><td><span class="raid-status '+sc+'"><span class="status-dot '+dc+'"></span> '+sl+'</span></td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(esc(r.notes)||'-')+'</td><td class="actions"><button class="btn-icon btn-edit" onclick="openRaidModal(raids.find(function(x){return x.id===\''+r.id+'\';}))" title="编辑">&#x270F;&#xFE0F;</button><button class="btn-icon" style="color:var(--accent-red)" onclick="deleteRaid(\''+r.id+'\')" title="删除">&#x1F5D1;&#xFE0F;</button></td></tr>';
+  }).join('');
+}
+function renderValor(){
+  var w=curRaidWeek;
+  var v=valorData[w]||{current:0,cap:1000};
+  var pct=Math.min(100,Math.round(v.current/v.cap*100));
+  var d=v.current>=v.cap;
+  var c=d?'var(--accent-green)':'var(--gold-light)';
+  var dc=d?' done':'';
+  document.getElementById('raidsStats').innerHTML+='<div class="stat-card valor-editor" onclick="editValor(\''+w+'\')" title="&#x70B9;&#x51FB;&#x4FEE;&#x6539;&#x52C7;&#x6C14;&#x70B9;&#x6570;">'+
+    '<div class="stat-label" style="margin-bottom:4px">&#x269A;&#xFE0F; &#x52C7;&#x6C14;&#x70B9;&#x6570;</div>'+
+    '<div style="font-size:22px;font-weight:800;color:'+c+'">'+v.current+' / '+v.cap+'</div>'+
+    '<div class="progress-bar" style="margin-top:4px"><div class="progress-track"><div class="progress-fill'+dc+'" style="width:'+pct+'%"></div></div></div>'+
+    '</div>';
+}
+function editValor(w){
+  var v=valorData[w]||{current:0,cap:1000};
+  var nc=prompt('&#x672C;&#x5468;&#x5DF2;&#x83B7;&#x5F97;&#x7684;&#x52C7;&#x6C14;&#x70B9;&#x6570;&#xFF1A;',v.current);
+  if(nc===null)return; nc=parseInt(nc)||0;
+  var ncap=prompt('&#x672C;&#x5468;&#x52C7;&#x6C14;&#x4E0A;&#x9650;&#xFF1A;',v.cap);
+  if(ncap===null)return; ncap=parseInt(ncap)||1000;
+  valorData[w]={current:nc,cap:ncap};
+  saveData(); renderAll();
+}
+function renderAll(){renderAccounts();renderGuides();renderRaids();renderValor();}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
