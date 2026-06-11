@@ -256,7 +256,7 @@ td.actions { white-space: nowrap; text-align: right; }
 .login-box .btn-gold { width: 100%; margin-top: 14px; justify-content: center; padding: 10px; font-size: 14px; }
 .login-box .login-hint { font-size: 11px; color: var(--text-muted); margin-top: 16px; opacity: 0.5; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 </head>
 <body>
 <div class="login-overlay" id="loginOverlay">
@@ -504,18 +504,14 @@ let accounts = []; let guides = []; let raids = []; let valorData = {};
  * 1. 在 supabase.com 注册并创建项目
  * 2. 将下方两个变量填入你的项目值
  */
-var SUPABASE_URL = 'https://cwktnlsxmrbtneevsupj.supabase.co';
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3a3RubHN4bXJidG5lZXZzdXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjk4ODIsImV4cCI6MjA5Njc0NTg4Mn0.BwrysWDBIRIjm1SESR7aGUDAnTDifIe9T7h9yJ5PREY';
+var SUPABASE_URL = '';
+var SUPABASE_ANON_KEY = '';
 var supabaseClient = null;
 var dataRowId = localStorage.getItem('wow_data_id') || null;
 var isRemoteUpdate = false;
-if(SUPABASE_URL && SUPABASE_ANON_KEY){
-  try{supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);}catch(e){}
-}
-async function init() {
+function init() {
   if(sessionStorage.getItem('wow_auth')==='1'){document.getElementById('loginOverlay').classList.add('hidden');}
   loadLocalData();
-  if(supabaseClient){try{await loadRemoteData();}catch(e){}setupRealtime();}
   initWeekInput(); renderAll();
 }
 async function loadRemoteData(){
@@ -556,11 +552,9 @@ function applyData(d){
 function loadLocalData() {
   try { var r = localStorage.getItem('wow_ctm_data'); if(r){var d=JSON.parse(r);if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;console.log('[OK] loaded from localStorage:',Object.keys(d));}else{console.log('[OK] no saved data');} } catch(e){console.warn('[ERR] load failed:',e);}
 }
-async function saveData() {
-  if(isRemoteUpdate)return;
+function saveData() {
   var d={accounts:accounts,guides:guides,raids:raids,valorData:valorData};
-  try{localStorage.setItem('wow_ctm_data',JSON.stringify(d));console.log('[OK] saved to localStorage, accounts:',accounts.length,'guides:',guides.length,'raids:',raids.length);}catch(e){console.warn('[ERR] save to localStorage failed:',e);}
-  if(supabaseClient&&dataRowId){try{await supabaseClient.from('app_data').upsert({id:dataRowId,data:d,updated_at:new Date().toISOString()});console.log('[OK] synced to Supabase');}catch(e){console.warn('[ERR] sync to Supabase failed:',e);}}
+  try{localStorage.setItem('wow_ctm_data',JSON.stringify(d));console.log('[OK] saved to localStorage, a:',accounts.length,'g:',guides.length,'r:',raids.length);}catch(e){console.warn('[ERR] save failed:',e);}
 }
 function exportData() {
   var b=new Blob([JSON.stringify({accounts,guides,raids,valorData},null,2)],{type:'application/json'});
