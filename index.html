@@ -521,11 +521,12 @@ async function loadRemoteData(){
   try{
     if(dataRowId){
       var {data:row}=await supabaseClient.from('app_data').select('*').eq('id',dataRowId).single();
-      if(row){applyData(row.data);return;}
+      if(row&&row.data){var d=row.data;if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;console.log('[OK] loaded from Supabase');try{localStorage.setItem('wow_ctm_data',JSON.stringify({accounts,guides,raids,valorData}));}catch(e){}return;}
     }
     var {data:newRow}=await supabaseClient.from('app_data').insert({data:{accounts:[],guides:[],raids:[],valorData:{}}}).select().single();
-    if(newRow){dataRowId=newRow.id;localStorage.setItem('wow_data_id',dataRowId);applyData(newRow.data);}
-  }catch(e){loadLocalData();console.warn('Sync failed, using local data',e);}
+    if(newRow){dataRowId=newRow.id;localStorage.setItem('wow_data_id',dataRowId);}
+  }catch(e){console.warn('[ERR] Supabase load failed, using local:',e);}
+  loadLocalData();
 }
 function setupRealtime(){
   if(!supabaseClient||!dataRowId)return;
@@ -544,13 +545,13 @@ function applyData(d){
   accounts=d.accounts||[];guides=d.guides||[];raids=d.raids||[];valorData=d.valorData||{};
 }
 function loadLocalData() {
-  try { var r = localStorage.getItem('wow_ctm_data'); if(r){var d=JSON.parse(r);accounts=d.accounts||[];guides=d.guides||[];raids=d.raids||[];valorData=d.valorData||{};} } catch(e){}
+  try { var r = localStorage.getItem('wow_ctm_data'); if(r){var d=JSON.parse(r);if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;console.log('[OK] loaded from localStorage:',Object.keys(d));}else{console.log('[OK] no saved data');} } catch(e){console.warn('[ERR] load failed:',e);}
 }
 async function saveData() {
   if(isRemoteUpdate)return;
   var d={accounts:accounts,guides:guides,raids:raids,valorData:valorData};
-  if(supabaseClient&&dataRowId){try{await supabaseClient.from('app_data').update({data:d,updated_at:new Date().toISOString()}).eq('id',dataRowId);}catch(e){}}
-  try{localStorage.setItem('wow_ctm_data',JSON.stringify(d));}catch(e){}
+  try{localStorage.setItem('wow_ctm_data',JSON.stringify(d));console.log('[OK] saved to localStorage, accounts:',accounts.length,'guides:',guides.length,'raids:',raids.length);}catch(e){console.warn('[ERR] save to localStorage failed:',e);}
+  if(supabaseClient&&dataRowId){try{await supabaseClient.from('app_data').upsert({id:dataRowId,data:d,updated_at:new Date().toISOString()});console.log('[OK] synced to Supabase');}catch(e){console.warn('[ERR] sync to Supabase failed:',e);}}
 }
 function exportData() {
   var b=new Blob([JSON.stringify({accounts,guides,raids,valorData},null,2)],{type:'application/json'});
