@@ -563,7 +563,7 @@ function importData(e) {
   rdr.onload=async function(ev){
     try{var d=JSON.parse(ev.target.result);if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;await saveData();renderAll();alert('数据导入成功！');}catch(e){alert('导入失败：文件格式不正确');}
   };
-  rdr.readAsText(r2);e.target.value='';
+  rdr.readAsText(f);e.target.value='';
 }
 async function login(){
   var pwd=document.getElementById('loginPwd').value;
