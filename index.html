@@ -514,19 +514,28 @@ if(SUPABASE_URL && SUPABASE_ANON_KEY){
 }
 async function init() {
   if(sessionStorage.getItem('wow_auth')==='1'){document.getElementById('loginOverlay').classList.add('hidden');}
-  if(supabaseClient){await loadRemoteData();setupRealtime();}else{loadLocalData();}
+  loadLocalData();
+  if(supabaseClient){try{await loadRemoteData();}catch(e){}setupRealtime();}
   initWeekInput(); renderAll();
 }
 async function loadRemoteData(){
   try{
     if(dataRowId){
       var {data:row}=await supabaseClient.from('app_data').select('*').eq('id',dataRowId).single();
-      if(row&&row.data){var d=row.data;if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;console.log('[OK] loaded from Supabase');try{localStorage.setItem('wow_ctm_data',JSON.stringify({accounts,guides,raids,valorData}));}catch(e){}return;}
+      if(row&&row.data){
+        var d=row.data;
+        var hasData=(d.accounts&&d.accounts.length)||(d.guides&&d.guides.length)||(d.raids&&d.raids.length);
+        if(hasData){
+          if(d.accounts)accounts=d.accounts;if(d.guides)guides=d.guides;if(d.raids)raids=d.raids;if(d.valorData)valorData=d.valorData;
+          console.log('[OK] loaded from Supabase (cloud)');
+          try{localStorage.setItem('wow_ctm_data',JSON.stringify({accounts,guides,raids,valorData}));}catch(e){}
+        }else{console.log('[OK] Supabase row exists but empty, keeping local data');}
+        return;
+      }
     }
     var {data:newRow}=await supabaseClient.from('app_data').insert({data:{accounts:[],guides:[],raids:[],valorData:{}}}).select().single();
-    if(newRow){dataRowId=newRow.id;localStorage.setItem('wow_data_id',dataRowId);}
-  }catch(e){console.warn('[ERR] Supabase load failed, using local:',e);}
-  loadLocalData();
+    if(newRow){dataRowId=newRow.id;localStorage.setItem('wow_data_id',dataRowId);console.log('[OK] created Supabase row:',dataRowId);}
+  }catch(e){console.warn('[ERR] Supabase sync failed:',e);}
 }
 function setupRealtime(){
   if(!supabaseClient||!dataRowId)return;
